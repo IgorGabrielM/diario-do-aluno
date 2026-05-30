@@ -1,20 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
-import { CreateEmpresaDto } from './dto/create-empresa.dto';
-import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { CreateAlunoDto } from './dto/create-aluno.dto';
+import { UpdateAlunoDto } from './dto/update-aluno.dto';
 
 @Injectable()
-export class EmpresasService {
+export class AlunosService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string) {
-    const { data, error } = await this.supabase
+  async findAll(userId: string, escolaId: string, turmaId?: string) {
+    let query = this.supabase
       .getClient()
-      .from('empresas')
-      .select('*')
+      .from('alunos')
+      .select('*, turmas(id, nome)')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .eq('escola_id', escolaId)
+      .order('nome');
 
+    if (turmaId) {
+      query = query.eq('turma_id', turmaId);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
@@ -22,38 +28,38 @@ export class EmpresasService {
   async findOne(id: string, userId: string) {
     const { data, error } = await this.supabase
       .getClient()
-      .from('empresas')
-      .select('*')
+      .from('alunos')
+      .select('*, turmas(id, nome)')
       .eq('id', id)
       .eq('user_id', userId)
       .single();
 
-    if (error) throw new NotFoundException('Empresa não encontrada');
+    if (error) throw new NotFoundException('Aluno não encontrado');
     return data;
   }
 
-  async create(dto: CreateEmpresaDto, userId: string) {
+  async create(dto: CreateAlunoDto, userId: string) {
     const { data, error } = await this.supabase
       .getClient()
-      .from('empresas')
+      .from('alunos')
       .insert({ ...dto, user_id: userId })
-      .select()
+      .select('*, turmas(id, nome)')
       .single();
 
     if (error) throw error;
     return data;
   }
 
-  async update(id: string, dto: UpdateEmpresaDto, userId: string) {
+  async update(id: string, dto: UpdateAlunoDto, userId: string) {
     await this.findOne(id, userId);
 
     const { data, error } = await this.supabase
       .getClient()
-      .from('empresas')
+      .from('alunos')
       .update(dto)
       .eq('id', id)
       .eq('user_id', userId)
-      .select()
+      .select('*, turmas(id, nome)')
       .single();
 
     if (error) throw error;
@@ -65,7 +71,7 @@ export class EmpresasService {
 
     const { error } = await this.supabase
       .getClient()
-      .from('empresas')
+      .from('alunos')
       .delete()
       .eq('id', id)
       .eq('user_id', userId);

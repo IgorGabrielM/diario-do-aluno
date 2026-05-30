@@ -11,44 +11,41 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { CurrentUserData } from '../auth/current-user.decorator';
-import { EmpresasService } from './empresas.service';
-import { CreateEmpresaDto } from './dto/create-empresa.dto';
-import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { EscolasService } from './escolas.service';
+import { CreateEscolaDto } from './dto/create-escola.dto';
+import { UpdateEscolaDto } from './dto/update-escola.dto';
 
 @UseGuards(JwtAuthGuard)
-@Controller('empresas')
-export class EmpresasController {
-  constructor(private readonly empresasService: EmpresasService) {}
+@Controller('escolas')
+export class EscolasController {
+  constructor(private readonly escolasService: EscolasService) {}
 
   @Get()
   findAll(@CurrentUser() user: CurrentUserData) {
-    return this.empresasService.findAll(user.id);
+    return this.escolasService.findAll(user.id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.empresasService.findOne(id, user.id);
+    return this.escolasService.findOne(id, user.id);
   }
 
   @Post()
-  create(
-    @Body() dto: CreateEmpresaDto,
-    @CurrentUser() user: CurrentUserData,
-  ) {
-    return this.empresasService.create(dto, user.id);
+  create(@Body() dto: CreateEscolaDto, @CurrentUser() user: CurrentUserData) {
+    return this.escolasService.create(dto, user.id);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() dto: UpdateEmpresaDto,
+    @Body() dto: UpdateEscolaDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.empresasService.update(id, dto, user.id);
+    return this.escolasService.update(id, dto, user.id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.empresasService.remove(id, user.id);
+    return this.escolasService.remove(id, user.id);
   }
 }

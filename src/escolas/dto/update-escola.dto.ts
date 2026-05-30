@@ -1,8 +1,9 @@
 import { IsString, IsOptional } from 'class-validator';
 
-export class CreateEmpresaDto {
+export class UpdateEscolaDto {
+  @IsOptional()
   @IsString()
-  nome: string;
+  nome?: string;
 
   @IsOptional()
   @IsString()
