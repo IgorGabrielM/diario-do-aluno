@@ -1,8 +1,12 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import type { UserRole } from './jwt.strategy';
 
 export interface CurrentUserData {
   id: string;
   email?: string;
+  role?: UserRole;
+  userId: string;
+  escolaId?: string;
 }
 
 export const CurrentUser = createParamDecorator(

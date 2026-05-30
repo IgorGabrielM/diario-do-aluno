@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { CreateCoordenadoraDto } from './dto/create-coordenadora.dto';
 import { UpdateCoordenadoraDto } from './dto/update-coordenadora.dto';
@@ -38,14 +38,37 @@ export class CoordenadorasService {
   }
 
   async create(dto: CreateCoordenadoraDto, userId: string) {
+    const { cpf, ...dadosCoordenadora } = dto;
+
+    const { data: authUser, error: authError } = await this.supabase
+      .getAdminClient()
+      .auth.admin.createUser({
+        email: dto.email,
+        password: cpf,
+        email_confirm: true,
+        app_metadata: { role: 'diretora' },
+        user_metadata: { nome: dto.nome },
+      });
+
+    if (authError) {
+      if (authError.message.includes('already been registered')) {
+        throw new BadRequestException('Já existe um usuário com este e-mail');
+      }
+      throw new InternalServerErrorException(authError.message);
+    }
+
     const { data, error } = await this.supabase
       .getClient()
       .from('coordenadoras')
-      .insert({ ...dto, user_id: userId })
+      .insert({ ...dadosCoordenadora, cpf, auth_user_id: authUser.user.id, user_id: userId })
       .select('*, escolas(id, nome)')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      await this.supabase.getAdminClient().auth.admin.deleteUser(authUser.user.id);
+      throw error;
+    }
+
     return data;
   }
 
@@ -66,7 +89,7 @@ export class CoordenadorasService {
   }
 
   async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+    const coordenadora = await this.findOne(id, userId);
 
     const { error } = await this.supabase
       .getClient()
@@ -76,5 +99,9 @@ export class CoordenadorasService {
       .eq('user_id', userId);
 
     if (error) throw error;
+
+    if (coordenadora.auth_user_id) {
+      await this.supabase.getAdminClient().auth.admin.deleteUser(coordenadora.auth_user_id);
+    }
   }
 }
