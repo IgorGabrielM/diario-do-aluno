@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUUID, Matches } from 'class-validator';
 
 export class UpdateTurmaDto {
   @IsOptional()
@@ -8,4 +8,9 @@ export class UpdateTurmaDto {
   @IsOptional()
   @IsUUID()
   professora_id?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'horarioEnvio deve estar no formato HH:MM' })
+  horarioEnvio?: string;
 }
