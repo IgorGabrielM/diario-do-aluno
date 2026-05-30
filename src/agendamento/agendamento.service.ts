@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { SupabaseService } from '../supabase/supabase.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 
@@ -35,7 +34,6 @@ export class AgendamentoService {
     private whatsapp: WhatsappService,
   ) {}
 
-  @Cron('* * * * *')
   async enviarDiariosAgendados() {
     const horarioAtual = new Date().toLocaleTimeString('pt-BR', {
       timeZone: 'America/Sao_Paulo',
