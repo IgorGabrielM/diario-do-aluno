@@ -9,27 +9,31 @@ import { UpdateDiarioModeloItemDto } from './dto/update-diario-modelo-item.dto';
 export class DiarioModelosService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string, turmaId: string) {
-    const { data, error } = await this.supabase
+  async findAll(userId: string, turmaId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('diario_modelos')
       .select('*, diario_modelo_itens(id, titulo, tipo, ordem, obrigatorio)')
-      .eq('user_id', userId)
       .eq('turma_id', turmaId)
       .order('nome');
 
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
 
-  async findOne(id: string, userId: string) {
-    const { data, error } = await this.supabase
+  async findOne(id: string, userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('diario_modelos')
       .select('*, diario_modelo_itens(id, titulo, tipo, ordem, obrigatorio)')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.single();
 
     if (error) throw new NotFoundException('Modelo de diário não encontrado');
     return data;
@@ -59,37 +63,32 @@ export class DiarioModelosService {
     return this.findOne(modelo.id, userId);
   }
 
-  async update(id: string, dto: UpdateDiarioModeloDto, userId: string) {
-    await this.findOne(id, userId);
+  async update(id: string, dto: UpdateDiarioModeloDto, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('diario_modelos')
-      .update(dto)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
+    let query = this.supabase.getClient().from('diario_modelos').update(dto).eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.select().single();
 
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
     const { error } = await this.supabase
       .getClient()
       .from('diario_modelos')
       .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+      .eq('id', id);
 
     if (error) throw error;
   }
 
-  async addItem(modeloId: string, dto: CreateDiarioModeloItemDto, userId: string) {
-    await this.findOne(modeloId, userId);
+  async addItem(modeloId: string, dto: CreateDiarioModeloItemDto, userId: string, isAdmin = false) {
+    await this.findOne(modeloId, userId, isAdmin);
 
     const { data, error } = await this.supabase
       .getClient()
@@ -102,8 +101,8 @@ export class DiarioModelosService {
     return data;
   }
 
-  async updateItem(modeloId: string, itemId: string, dto: UpdateDiarioModeloItemDto, userId: string) {
-    await this.findOne(modeloId, userId);
+  async updateItem(modeloId: string, itemId: string, dto: UpdateDiarioModeloItemDto, userId: string, isAdmin = false) {
+    await this.findOne(modeloId, userId, isAdmin);
 
     const { data, error } = await this.supabase
       .getClient()
@@ -118,8 +117,8 @@ export class DiarioModelosService {
     return data;
   }
 
-  async removeItem(modeloId: string, itemId: string, userId: string) {
-    await this.findOne(modeloId, userId);
+  async removeItem(modeloId: string, itemId: string, userId: string, isAdmin = false) {
+    await this.findOne(modeloId, userId, isAdmin);
 
     const { error } = await this.supabase
       .getClient()

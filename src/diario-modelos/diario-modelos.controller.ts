@@ -23,13 +23,13 @@ export class DiarioModelosController {
     @CurrentUser() user: CurrentUserData,
     @Query('turma_id') turmaId: string,
   ) {
-    return this.diarioModelosService.findAll(user.userId, turmaId);
+    return this.diarioModelosService.findAll(user.userId, turmaId, user.role === 'admin');
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar modelo por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.diarioModelosService.findOne(id, user.userId);
+    return this.diarioModelosService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -45,13 +45,13 @@ export class DiarioModelosController {
     @Body() dto: UpdateDiarioModeloDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.diarioModelosService.update(id, dto, user.userId);
+    return this.diarioModelosService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover modelo de diário' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.diarioModelosService.remove(id, user.userId);
+    return this.diarioModelosService.remove(id, user.userId, user.role === 'admin');
   }
 
   @Post(':id/itens')
@@ -61,7 +61,7 @@ export class DiarioModelosController {
     @Body() dto: CreateDiarioModeloItemDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.diarioModelosService.addItem(id, dto, user.userId);
+    return this.diarioModelosService.addItem(id, dto, user.userId, user.role === 'admin');
   }
 
   @Patch(':id/itens/:itemId')
@@ -72,7 +72,7 @@ export class DiarioModelosController {
     @Body() dto: UpdateDiarioModeloItemDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.diarioModelosService.updateItem(id, itemId, dto, user.userId);
+    return this.diarioModelosService.updateItem(id, itemId, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id/itens/:itemId')
@@ -82,6 +82,6 @@ export class DiarioModelosController {
     @Param('itemId') itemId: string,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.diarioModelosService.removeItem(id, itemId, user.userId);
+    return this.diarioModelosService.removeItem(id, itemId, user.userId, user.role === 'admin');
   }
 }

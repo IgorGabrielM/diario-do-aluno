@@ -33,13 +33,14 @@ export class AlunosController {
     @Query('escola_id') escolaId?: string,
     @Query('turma_id') turmaId?: string,
   ) {
-    return this.alunosService.findAll(user.userId, user.escolaId ?? escolaId!, turmaId);
+    const isAdmin = user.role === 'admin';
+    return this.alunosService.findAll(user.userId, user.escolaId ?? escolaId!, turmaId, isAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar aluno por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.alunosService.findOne(id, user.userId);
+    return this.alunosService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -55,12 +56,12 @@ export class AlunosController {
     @Body() dto: UpdateAlunoDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.alunosService.update(id, dto, user.userId);
+    return this.alunosService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover aluno' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.alunosService.remove(id, user.userId);
+    return this.alunosService.remove(id, user.userId, user.role === 'admin');
   }
 }

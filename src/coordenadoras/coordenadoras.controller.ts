@@ -31,13 +31,14 @@ export class CoordenadorasController {
     @CurrentUser() user: CurrentUserData,
     @Query('escola_id') escolaId?: string,
   ) {
-    return this.coordenadorasService.findAll(user.userId, user.escolaId ?? escolaId);
+    const isAdmin = user.role === 'admin';
+    return this.coordenadorasService.findAll(user.userId, user.escolaId ?? escolaId, isAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar coordenadora por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.coordenadorasService.findOne(id, user.userId);
+    return this.coordenadorasService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -56,12 +57,12 @@ export class CoordenadorasController {
     @Body() dto: UpdateCoordenadoraDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.coordenadorasService.update(id, dto, user.userId);
+    return this.coordenadorasService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover coordenadora' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.coordenadorasService.remove(id, user.userId);
+    return this.coordenadorasService.remove(id, user.userId, user.role === 'admin');
   }
 }

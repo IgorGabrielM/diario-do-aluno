@@ -7,26 +7,30 @@ import { UpdateEscolaDto } from './dto/update-escola.dto';
 export class EscolasService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string) {
-    const { data, error } = await this.supabase
+  async findAll(userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('escolas')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
 
-  async findOne(id: string, userId: string) {
-    const { data, error } = await this.supabase
+  async findOne(id: string, userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('escolas')
       .select('*')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.single();
 
     if (error) throw new NotFoundException('Escola não encontrada');
     return data;
@@ -44,32 +48,24 @@ export class EscolasService {
     return data;
   }
 
-  async update(id: string, dto: UpdateEscolaDto, userId: string) {
-    await this.findOne(id, userId);
+  async update(id: string, dto: UpdateEscolaDto, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('escolas')
-      .update(dto)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
+    let query = this.supabase.getClient().from('escolas').update(dto).eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { error } = await this.supabase
-      .getClient()
-      .from('escolas')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    let query = this.supabase.getClient().from('escolas').delete().eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { error } = await query;
     if (error) throw error;
   }
 }

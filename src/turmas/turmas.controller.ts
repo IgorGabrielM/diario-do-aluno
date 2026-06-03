@@ -31,13 +31,14 @@ export class TurmasController {
     @CurrentUser() user: CurrentUserData,
     @Query('escola_id') escolaId?: string,
   ) {
-    return this.turmasService.findAll(user.userId, user.escolaId ?? escolaId!);
+    const isAdmin = user.role === 'admin';
+    return this.turmasService.findAll(user.userId, user.escolaId ?? escolaId!, isAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar turma por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.turmasService.findOne(id, user.userId);
+    return this.turmasService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -53,13 +54,13 @@ export class TurmasController {
     @Body() dto: UpdateTurmaDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.turmasService.update(id, dto, user.userId);
+    return this.turmasService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover turma' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.turmasService.remove(id, user.userId);
+    return this.turmasService.remove(id, user.userId, user.role === 'admin');
   }
 
   @Post(':id/professoras/:professoraId')
@@ -69,7 +70,7 @@ export class TurmasController {
     @Param('professoraId') professoraId: string,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.turmasService.addProfessora(id, professoraId, user.userId);
+    return this.turmasService.addProfessora(id, professoraId, user.userId, user.role === 'admin');
   }
 
   @Delete(':id/professoras/:professoraId')
@@ -79,6 +80,6 @@ export class TurmasController {
     @Param('professoraId') professoraId: string,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.turmasService.removeProfessora(id, professoraId, user.userId);
+    return this.turmasService.removeProfessora(id, professoraId, user.userId, user.role === 'admin');
   }
 }

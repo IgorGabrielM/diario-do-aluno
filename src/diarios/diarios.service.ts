@@ -7,14 +7,14 @@ import { UpdateDiarioDto } from './dto/update-diario.dto';
 export class DiariosService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string, alunoId?: string, data?: string) {
+  async findAll(userId: string, alunoId?: string, data?: string, isAdmin = false) {
     let query = this.supabase
       .getClient()
       .from('diarios')
       .select('*, alunos(id, nome), diario_modelos(id, nome), diario_respostas(id, item_id, valor, imagem_url)')
-      .eq('user_id', userId)
       .order('data', { ascending: false });
 
+    if (!isAdmin) query = query.eq('user_id', userId);
     if (alunoId) query = query.eq('aluno_id', alunoId);
     if (data) query = query.eq('data', data);
 
@@ -23,14 +23,16 @@ export class DiariosService {
     return result;
   }
 
-  async findOne(id: string, userId: string) {
-    const { data, error } = await this.supabase
+  async findOne(id: string, userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('diarios')
       .select('*, alunos(id, nome), diario_modelos(id, nome, diario_modelo_itens(id, titulo, tipo, ordem, obrigatorio)), diario_respostas(id, item_id, valor, imagem_url)')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.single();
 
     if (error) throw new NotFoundException('Diário não encontrado');
     return data;
@@ -60,8 +62,8 @@ export class DiariosService {
     return this.findOne(diario.id, userId);
   }
 
-  async update(id: string, dto: UpdateDiarioDto, userId: string) {
-    await this.findOne(id, userId);
+  async update(id: string, dto: UpdateDiarioDto, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
     if (dto.respostas?.length) {
       const { error } = await this.supabase
@@ -75,35 +77,32 @@ export class DiariosService {
       if (error) throw error;
     }
 
-    return this.findOne(id, userId);
+    return this.findOne(id, userId, isAdmin);
   }
 
-  async enviar(id: string, userId: string) {
-    await this.findOne(id, userId);
+  async enviar(id: string, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .getClient()
       .from('diarios')
       .update({ enviado_em: new Date().toISOString() })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
+      .eq('id', id);
 
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { error } = await this.supabase
-      .getClient()
-      .from('diarios')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    let query = this.supabase.getClient().from('diarios').delete().eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { error } = await query;
     if (error) throw error;
   }
 }

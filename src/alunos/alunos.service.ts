@@ -7,14 +7,16 @@ import { UpdateAlunoDto } from './dto/update-aluno.dto';
 export class AlunosService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string, escolaId: string, turmaId?: string) {
+  async findAll(userId: string, escolaId: string, turmaId?: string, isAdmin = false) {
     let query = this.supabase
       .getClient()
       .from('alunos')
       .select('*, turmas(id, nome)')
-      .eq('user_id', userId)
-      .eq('escola_id', escolaId)
       .order('nome');
+
+    if (!isAdmin) {
+      query = query.eq('user_id', userId).eq('escola_id', escolaId);
+    }
 
     if (turmaId) {
       query = query.eq('turma_id', turmaId);
@@ -25,14 +27,16 @@ export class AlunosService {
     return data;
   }
 
-  async findOne(id: string, userId: string) {
-    const { data, error } = await this.supabase
+  async findOne(id: string, userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('alunos')
       .select('*, turmas(id, nome)')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.single();
 
     if (error) throw new NotFoundException('Aluno não encontrado');
     return data;
@@ -50,32 +54,24 @@ export class AlunosService {
     return data;
   }
 
-  async update(id: string, dto: UpdateAlunoDto, userId: string) {
-    await this.findOne(id, userId);
+  async update(id: string, dto: UpdateAlunoDto, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('alunos')
-      .update(dto)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select('*, turmas(id, nome)')
-      .single();
+    let query = this.supabase.getClient().from('alunos').update(dto).eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { data, error } = await query.select('*, turmas(id, nome)').single();
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { error } = await this.supabase
-      .getClient()
-      .from('alunos')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    let query = this.supabase.getClient().from('alunos').delete().eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { error } = await query;
     if (error) throw error;
   }
 }

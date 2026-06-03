@@ -14,27 +14,32 @@ const TURMA_SELECT =
 export class TurmasService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string, escolaId: string) {
-    const { data, error } = await this.supabase
+  async findAll(userId: string, escolaId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('turmas')
       .select(TURMA_SELECT)
-      .eq('user_id', userId)
-      .eq('escola_id', escolaId)
       .order('nome');
 
+    if (!isAdmin) {
+      query = query.eq('user_id', userId).eq('escola_id', escolaId);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
 
-  async findOne(id: string, userId: string) {
-    const { data, error } = await this.supabase
+  async findOne(id: string, userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('turmas')
       .select(TURMA_SELECT)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.single();
 
     if (error) throw new NotFoundException('Turma não encontrada');
     return data;
@@ -70,37 +75,29 @@ export class TurmasService {
     return this.findOne(turma.id, userId);
   }
 
-  async update(id: string, dto: UpdateTurmaDto, userId: string) {
-    await this.findOne(id, userId);
+  async update(id: string, dto: UpdateTurmaDto, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('turmas')
-      .update(dto)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select(TURMA_SELECT)
-      .single();
+    let query = this.supabase.getClient().from('turmas').update(dto).eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { data, error } = await query.select(TURMA_SELECT).single();
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { error } = await this.supabase
-      .getClient()
-      .from('turmas')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    let query = this.supabase.getClient().from('turmas').delete().eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { error } = await query;
     if (error) throw error;
   }
 
-  async addProfessora(turmaId: string, professoraId: string, userId: string) {
-    await this.findOne(turmaId, userId);
+  async addProfessora(turmaId: string, professoraId: string, userId: string, isAdmin = false) {
+    await this.findOne(turmaId, userId, isAdmin);
 
     const { error } = await this.supabase
       .getClient()
@@ -112,22 +109,25 @@ export class TurmasService {
       throw error;
     }
 
-    return this.findOne(turmaId, userId);
+    return this.findOne(turmaId, userId, isAdmin);
   }
 
-  async removeProfessora(turmaId: string, professoraId: string, userId: string) {
-    await this.findOne(turmaId, userId);
+  async removeProfessora(turmaId: string, professoraId: string, userId: string, isAdmin = false) {
+    await this.findOne(turmaId, userId, isAdmin);
 
-    const { error } = await this.supabase
+    let query = this.supabase
       .getClient()
       .from('turma_professoras')
       .delete()
       .eq('turma_id', turmaId)
-      .eq('professora_id', professoraId)
-      .eq('user_id', userId);
+      .eq('professora_id', professoraId);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { error } = await query;
 
     if (error) throw error;
 
-    return this.findOne(turmaId, userId);
+    return this.findOne(turmaId, userId, isAdmin);
   }
 }

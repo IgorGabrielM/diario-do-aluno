@@ -7,27 +7,32 @@ import { UpdateProfessoraDto } from './dto/update-professora.dto';
 export class ProfessorasService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string, escolaId: string) {
-    const { data, error } = await this.supabase
+  async findAll(userId: string, escolaId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('professoras')
       .select('*')
-      .eq('user_id', userId)
-      .eq('escola_id', escolaId)
       .order('nome');
 
+    if (!isAdmin) {
+      query = query.eq('user_id', userId).eq('escola_id', escolaId);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
 
-  async findOne(id: string, userId: string) {
-    const { data, error } = await this.supabase
+  async findOne(id: string, userId: string, isAdmin = false) {
+    let query = this.supabase
       .getClient()
       .from('professoras')
       .select('*')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { data, error } = await query.single();
 
     if (error) throw new NotFoundException('Professora não encontrada');
     return data;
@@ -68,31 +73,24 @@ export class ProfessorasService {
     return data;
   }
 
-  async update(id: string, dto: UpdateProfessoraDto, userId: string) {
-    await this.findOne(id, userId);
+  async update(id: string, dto: UpdateProfessoraDto, userId: string, isAdmin = false) {
+    await this.findOne(id, userId, isAdmin);
 
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('professoras')
-      .update(dto)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
+    let query = this.supabase.getClient().from('professoras').update(dto).eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
 
+    const { data, error } = await query.select().single();
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string) {
-    const professora = await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false) {
+    const professora = await this.findOne(id, userId, isAdmin);
 
-    const { error } = await this.supabase
-      .getClient()
-      .from('professoras')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    let query = this.supabase.getClient().from('professoras').delete().eq('id', id);
+    if (!isAdmin) query = query.eq('user_id', userId);
+
+    const { error } = await query;
 
     if (error) throw error;
 

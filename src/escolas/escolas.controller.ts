@@ -26,13 +26,13 @@ export class EscolasController {
   @Get()
   @ApiOperation({ summary: 'Listar escolas do usuário' })
   findAll(@CurrentUser() user: CurrentUserData) {
-    return this.escolasService.findAll(user.userId);
+    return this.escolasService.findAll(user.userId, user.role === 'admin');
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar escola por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.escolasService.findOne(id, user.userId);
+    return this.escolasService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -48,12 +48,12 @@ export class EscolasController {
     @Body() dto: UpdateEscolaDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.escolasService.update(id, dto, user.userId);
+    return this.escolasService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover escola' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.escolasService.remove(id, user.userId);
+    return this.escolasService.remove(id, user.userId, user.role === 'admin');
   }
 }

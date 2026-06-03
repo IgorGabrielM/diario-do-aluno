@@ -31,13 +31,14 @@ export class ProfessorasController {
     @CurrentUser() user: CurrentUserData,
     @Query('escola_id') escolaId?: string,
   ) {
-    return this.professorasService.findAll(user.userId, user.escolaId ?? escolaId!);
+    const isAdmin = user.role === 'admin';
+    return this.professorasService.findAll(user.userId, user.escolaId ?? escolaId!, isAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar professora por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.professorasService.findOne(id, user.userId);
+    return this.professorasService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -56,12 +57,12 @@ export class ProfessorasController {
     @Body() dto: UpdateProfessoraDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.professorasService.update(id, dto, user.userId);
+    return this.professorasService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover professora' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.professorasService.remove(id, user.userId);
+    return this.professorasService.remove(id, user.userId, user.role === 'admin');
   }
 }

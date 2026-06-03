@@ -23,13 +23,14 @@ export class DiariosController {
     @Query('aluno_id') alunoId?: string,
     @Query('data') data?: string,
   ) {
-    return this.diariosService.findAll(user.userId, alunoId, data);
+    const isAdmin = user.role === 'admin';
+    return this.diariosService.findAll(user.userId, alunoId, data, isAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar diário por ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.diariosService.findOne(id, user.userId);
+    return this.diariosService.findOne(id, user.userId, user.role === 'admin');
   }
 
   @Post()
@@ -45,18 +46,18 @@ export class DiariosController {
     @Body() dto: UpdateDiarioDto,
     @CurrentUser() user: CurrentUserData,
   ) {
-    return this.diariosService.update(id, dto, user.userId);
+    return this.diariosService.update(id, dto, user.userId, user.role === 'admin');
   }
 
   @Post(':id/enviar')
   @ApiOperation({ summary: 'Enviar diário via WhatsApp para os responsáveis' })
   enviar(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.diariosService.enviar(id, user.userId);
+    return this.diariosService.enviar(id, user.userId, user.role === 'admin');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remover diário' })
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.diariosService.remove(id, user.userId);
+    return this.diariosService.remove(id, user.userId, user.role === 'admin');
   }
 }
