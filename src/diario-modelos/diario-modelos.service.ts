@@ -9,43 +9,36 @@ import { UpdateDiarioModeloItemDto } from './dto/update-diario-modelo-item.dto';
 export class DiarioModelosService {
   constructor(private supabase: SupabaseService) {}
 
-  async findAll(userId: string, turmaId: string, isAdmin = false) {
-    let query = this.supabase
+  async findAll() {
+    const { data, error } = await this.supabase
       .getClient()
       .from('diario_modelos')
       .select('*, diario_modelo_itens(id, titulo, tipo, ordem, obrigatorio)')
-      .eq('turma_id', turmaId)
       .order('nome');
 
-    if (!isAdmin) query = query.eq('user_id', userId);
-
-    const { data, error } = await query;
     if (error) throw error;
     return data;
   }
 
-  async findOne(id: string, userId: string, isAdmin = false) {
-    let query = this.supabase
+  async findOne(id: string) {
+    const { data, error } = await this.supabase
       .getClient()
       .from('diario_modelos')
       .select('*, diario_modelo_itens(id, titulo, tipo, ordem, obrigatorio)')
-      .eq('id', id);
-
-    if (!isAdmin) query = query.eq('user_id', userId);
-
-    const { data, error } = await query.single();
+      .eq('id', id)
+      .single();
 
     if (error) throw new NotFoundException('Modelo de diário não encontrado');
     return data;
   }
 
-  async create(dto: CreateDiarioModeloDto, userId: string) {
+  async create(dto: CreateDiarioModeloDto) {
     const { itens, ...modeloData } = dto;
 
     const { data: modelo, error: modeloError } = await this.supabase
       .getClient()
       .from('diario_modelos')
-      .insert({ ...modeloData, nome: modeloData.nome ?? 'Diário Padrão', user_id: userId })
+      .insert({ ...modeloData, nome: modeloData.nome ?? 'Diário Padrão' })
       .select()
       .single();
 
@@ -60,23 +53,26 @@ export class DiarioModelosService {
       if (itensError) throw itensError;
     }
 
-    return this.findOne(modelo.id, userId);
+    return this.findOne(modelo.id);
   }
 
-  async update(id: string, dto: UpdateDiarioModeloDto, userId: string, isAdmin = false) {
-    await this.findOne(id, userId, isAdmin);
+  async update(id: string, dto: UpdateDiarioModeloDto) {
+    await this.findOne(id);
 
-    let query = this.supabase.getClient().from('diario_modelos').update(dto).eq('id', id);
-    if (!isAdmin) query = query.eq('user_id', userId);
-
-    const { data, error } = await query.select().single();
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('diario_modelos')
+      .update(dto)
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) throw error;
     return data;
   }
 
-  async remove(id: string, userId: string, isAdmin = false) {
-    await this.findOne(id, userId, isAdmin);
+  async remove(id: string) {
+    await this.findOne(id);
 
     const { error } = await this.supabase
       .getClient()
@@ -87,8 +83,8 @@ export class DiarioModelosService {
     if (error) throw error;
   }
 
-  async addItem(modeloId: string, dto: CreateDiarioModeloItemDto, userId: string, isAdmin = false) {
-    await this.findOne(modeloId, userId, isAdmin);
+  async addItem(modeloId: string, dto: CreateDiarioModeloItemDto) {
+    await this.findOne(modeloId);
 
     const { data, error } = await this.supabase
       .getClient()
@@ -101,8 +97,8 @@ export class DiarioModelosService {
     return data;
   }
 
-  async updateItem(modeloId: string, itemId: string, dto: UpdateDiarioModeloItemDto, userId: string, isAdmin = false) {
-    await this.findOne(modeloId, userId, isAdmin);
+  async updateItem(modeloId: string, itemId: string, dto: UpdateDiarioModeloItemDto) {
+    await this.findOne(modeloId);
 
     const { data, error } = await this.supabase
       .getClient()
@@ -117,8 +113,8 @@ export class DiarioModelosService {
     return data;
   }
 
-  async removeItem(modeloId: string, itemId: string, userId: string, isAdmin = false) {
-    await this.findOne(modeloId, userId, isAdmin);
+  async removeItem(modeloId: string, itemId: string) {
+    await this.findOne(modeloId);
 
     const { error } = await this.supabase
       .getClient()

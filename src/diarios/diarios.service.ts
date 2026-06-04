@@ -11,7 +11,7 @@ export class DiariosService {
     let query = this.supabase
       .getClient()
       .from('diarios')
-      .select('*, alunos(id, nome), diario_modelos(id, nome), diario_respostas(id, item_id, valor, imagem_url)')
+      .select('*, alunos(id, nome), diario_modelos(id, nome)')
       .order('data', { ascending: false });
 
     if (!isAdmin) query = query.eq('user_id', userId);

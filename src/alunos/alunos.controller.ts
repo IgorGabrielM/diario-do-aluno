@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { CurrentUserData } from '../auth/current-user.decorator';
 import { AlunosService } from './alunos.service';
+import { DiariosService } from '../diarios/diarios.service';
 import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
 
@@ -22,7 +23,10 @@ import { UpdateAlunoDto } from './dto/update-aluno.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('alunos')
 export class AlunosController {
-  constructor(private readonly alunosService: AlunosService) {}
+  constructor(
+    private readonly alunosService: AlunosService,
+    private readonly diariosService: DiariosService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar alunos da escola (filtro opcional por turma)' })
@@ -35,6 +39,18 @@ export class AlunosController {
   ) {
     const isAdmin = user.role === 'admin';
     return this.alunosService.findAll(user.userId, user.escolaId ?? escolaId!, turmaId, isAdmin);
+  }
+
+  @Get(':id/diarios')
+  @ApiOperation({ summary: 'Listar diários do aluno' })
+  @ApiQuery({ name: 'data', required: false, example: '2026-05-30' })
+  findDiarios(
+    @Param('id') id: string,
+    @CurrentUser() user: CurrentUserData,
+    @Query('data') data?: string,
+  ) {
+    const isAdmin = user.role === 'admin';
+    return this.diariosService.findAll(user.userId, id, data, isAdmin);
   }
 
   @Get(':id')
